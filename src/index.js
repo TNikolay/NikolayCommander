@@ -1,4 +1,4 @@
-import NikolayCommander from "./NikolayCommander.js"
+import { NikolayCommander } from "./NikolayCommander.js"
 
 const ARG_USER_NAME = "--username="
 

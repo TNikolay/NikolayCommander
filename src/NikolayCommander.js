@@ -1,9 +1,26 @@
 import os from "os"
+import path from "path"
+import { getSystemInfo } from "./utils/osInfo.js"
 import { createInterface } from "readline/promises"
 
-export default class NikolayCommander {
+export class NikolayCommander {
   #path
 
+  COMMAND_LIST = {
+    up: 1,
+    cd: 2,
+    ls: 1,
+    cat: 2,
+    add: 2,
+    rn: 3,
+    cp: 3,
+    mv: 3,
+    rm: 2,
+    os: 2,
+    hash: 2,
+    compress: 3,
+    decompress: 3,
+  }
   constructor(path) {
     this.#path = path || os.homedir()
   }
@@ -14,23 +31,37 @@ export default class NikolayCommander {
     console.log(`You are currently in ${this.#path}\n\n`)
 
     while (true) {
-      const answer = await rl.question(">> ")
-      const command = this.#parseInput(answer)
-      console.log(command)
-      if (command[0] === ".exit") return rl.close()
+      const answer = (await rl.question(">> ")).trim()
+      if (answer === ".exit") return rl.close()
 
-      console.log(`You are currently in ${this.#path}\n\n`)
+      const cmd = this.#parseInput(answer)
+
+      if (!cmd || !this.COMMAND_LIST[cmd[0]] || cmd.length !== this.COMMAND_LIST[cmd[0]]) {
+        console.log("Invalid input")
+        continue
+      }
+
+      await this[cmd[0]](cmd)
+      console.log(`\n\nYou are currently in ${this.#path}\n\n`)
     }
+  }
+
+  async up() {
+    this.#path = path.resolve(this.#path, "..")
+  }
+
+  async os(cmd) {
+    getSystemInfo(cmd[1])
   }
 
   #parseInput(command) {
     const res = []
-    let current = command.trim()
+    let current = command
 
     while (current.length) {
       if (current[0] === '"') {
         const index = current.indexOf('"', 1)
-        if (index === -1) return null // not valid input
+        if (index === -1) return [] // not valid input
         res.push(current.slice(1, index))
         current = current.slice(index + 1).trimStart()
       } else {
