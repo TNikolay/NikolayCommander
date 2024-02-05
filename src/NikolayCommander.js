@@ -5,7 +5,7 @@ import { pipeline } from "stream/promises"
 import { fileURLToPath } from "url"
 import { lsDir, isPathExist } from "./utils/NCPath.js"
 import { calculateHash } from "./utils/NCHash.js"
-import { getSystemInfo } from "./utils/osInfo.js"
+import { getSystemInfo } from "./utils/NCOsInfo.js"
 import { createReadStream, createWriteStream } from "fs"
 import { compressBrotli, decompressBrotli } from "./utils/NCZlib.js"
 
