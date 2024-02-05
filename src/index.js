@@ -1,11 +1,9 @@
 import { NikolayCommander } from "./NikolayCommander.js"
+import { getArgValue } from "./utils/utils.js"
 
-const ARG_USER_NAME = "--username="
+const userName = getArgValue("username") || "Neanderthal"
 
-const t = process.argv.find(v => v.startsWith(ARG_USER_NAME))
-const userName = t ? t.slice(ARG_USER_NAME.length) : "Neanderthal"
-
-console.log(`\n\nWelcome to the File Manager, ${userName}!\n\n`)
 process.on("exit", () => console.log(`\n\nThank you for using File Manager, ${userName}, goodbye!\n\n`))
+console.log(`\n\nWelcome to the File Manager, ${userName}!\n\n`)
 
 new NikolayCommander().start()
