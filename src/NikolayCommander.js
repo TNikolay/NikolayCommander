@@ -1,15 +1,14 @@
+import { createReadStream, createWriteStream } from "fs"
 import fs from "fs/promises"
+import os from "os"
 import path from "path"
 import { createInterface } from "readline/promises"
 import { pipeline } from "stream/promises"
-import { fileURLToPath } from "url"
-import { lsDir, isPathExist } from "./utils/NCPath.js"
 import { calculateHash } from "./utils/NCHash.js"
 import { getSystemInfo } from "./utils/NCOsInfo.js"
-import { createReadStream, createWriteStream } from "fs"
+import { isPathExist, lsDir } from "./utils/NCPath.js"
 import { compressBrotli, decompressBrotli } from "./utils/NCZlib.js"
 
-const __dirname = fileURLToPath(path.dirname(import.meta.url)) // TODO
 export class NikolayCommander {
   #path
 
@@ -29,34 +28,29 @@ export class NikolayCommander {
     decompress: 3,
   }
   constructor(path) {
-    //this.#path = path || os.homedir() // TODO
-    this.#path = path || __dirname
+    this.#path = path || os.homedir()
   }
 
   async start() {
     const rl = createInterface({ input: process.stdin, output: process.stdout })
 
-    console.log(`You are currently in ${this.#path}\n\n`)
-
     while (true) {
+      console.log(`\nYou are currently in ${this.#path}\n\n`)
+
       const answer = (await rl.question(">> ")).trim()
       if (answer === ".exit") return rl.close()
 
       try {
         const cmd = this.#parseInput(answer)
-        console.log(cmd)
         if (!cmd || !this.COMMAND_LIST[cmd[0]] || cmd.length !== this.COMMAND_LIST[cmd[0]]) {
-          console.log("Invalid input\n\n")
+          console.log("Invalid input")
           continue
         }
 
         await this[cmd[0]](cmd)
-      } catch (e) {
-        console.log("\nOperation failed\n\n")
-        console.log("error:  ", e) // TODO
+      } catch {
+        console.log("\nOperation failed")
       }
-
-      console.log(`\n\nYou are currently in ${this.#path}\n\n`)
     }
   }
 
@@ -165,4 +159,3 @@ export class NikolayCommander {
     return res
   }
 }
-//new NikolayCommander().start()
