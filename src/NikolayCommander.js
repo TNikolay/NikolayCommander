@@ -4,11 +4,12 @@ import { createInterface } from "readline/promises"
 import { pipeline } from "stream/promises"
 import { fileURLToPath } from "url"
 import { lsDir, isPathExist } from "./utils/NCPath.js"
+import { calculateHash } from "./utils/NCHash.js"
 import { getSystemInfo } from "./utils/osInfo.js"
 import { createReadStream, createWriteStream } from "fs"
+import { compressBrotli, decompressBrotli } from "./utils/NCZlib.js"
 
-const __dirname = fileURLToPath(path.dirname(import.meta.url))
-
+const __dirname = fileURLToPath(path.dirname(import.meta.url)) // TODO
 export class NikolayCommander {
   #path
 
@@ -113,6 +114,26 @@ export class NikolayCommander {
 
   async os(cmd) {
     getSystemInfo(cmd[1])
+  }
+
+  async hash(cmd) {
+    await calculateHash(path.resolve(this.#path, cmd[1]))
+  }
+
+  async compress(cmd) {
+    const src = path.join(this.#path, cmd[1])
+    const dest = path.join(this.#path, cmd[2])
+    if (await isPathExist(dest)) throw new Error("File already exists " + dest)
+
+    await compressBrotli(src, dest)
+  }
+
+  async decompress(cmd) {
+    const src = path.join(this.#path, cmd[1])
+    const dest = path.join(this.#path, cmd[2])
+    if (await isPathExist(dest)) throw new Error("File already exists " + dest)
+
+    await decompressBrotli(src, dest)
   }
 
   #parseInput(command) {
