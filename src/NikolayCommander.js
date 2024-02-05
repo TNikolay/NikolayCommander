@@ -1,7 +1,13 @@
-import os from "os"
+import fs from "fs/promises"
 import path from "path"
-import { getSystemInfo } from "./utils/osInfo.js"
 import { createInterface } from "readline/promises"
+import { pipeline } from "stream/promises"
+import { fileURLToPath } from "url"
+import { lsDir, isPathExist } from "./utils/NCPath.js"
+import { getSystemInfo } from "./utils/osInfo.js"
+import { createReadStream, createWriteStream } from "fs"
+
+const __dirname = fileURLToPath(path.dirname(import.meta.url))
 
 export class NikolayCommander {
   #path
@@ -22,7 +28,8 @@ export class NikolayCommander {
     decompress: 3,
   }
   constructor(path) {
-    this.#path = path || os.homedir()
+    //this.#path = path || os.homedir() // TODO
+    this.#path = path || __dirname
   }
 
   async start() {
@@ -34,20 +41,74 @@ export class NikolayCommander {
       const answer = (await rl.question(">> ")).trim()
       if (answer === ".exit") return rl.close()
 
-      const cmd = this.#parseInput(answer)
+      try {
+        const cmd = this.#parseInput(answer)
+        console.log(cmd)
+        if (!cmd || !this.COMMAND_LIST[cmd[0]] || cmd.length !== this.COMMAND_LIST[cmd[0]]) {
+          console.log("Invalid input\n\n")
+          continue
+        }
 
-      if (!cmd || !this.COMMAND_LIST[cmd[0]] || cmd.length !== this.COMMAND_LIST[cmd[0]]) {
-        console.log("Invalid input")
-        continue
+        await this[cmd[0]](cmd)
+      } catch (e) {
+        console.log("\nOperation failed\n\n")
+        console.log("error:  ", e) // TODO
       }
 
-      await this[cmd[0]](cmd)
       console.log(`\n\nYou are currently in ${this.#path}\n\n`)
     }
   }
 
   async up() {
     this.#path = path.resolve(this.#path, "..")
+  }
+
+  async cd(cmd) {
+    const newPath = path.resolve(this.#path, cmd[1])
+    await fs.access(newPath)
+    this.#path = newPath
+  }
+
+  async ls() {
+    await lsDir(this.#path)
+  }
+
+  async add(cmd) {
+    const src = path.resolve(this.#path, cmd[1])
+    await fs.writeFile(src, "", { flag: "wx" })
+  }
+
+  async rn(cmd) {
+    const oldName = path.join(this.#path, cmd[1])
+    const newName = path.join(this.#path, cmd[2])
+    if (await isPathExist(newName)) throw new Error("File already exists")
+    await fs.rename(oldName, newName)
+  }
+
+  async cat(cmd) {
+    const file = path.resolve(this.#path, cmd[1])
+    const readStream = createReadStream(file)
+    await pipeline(readStream, process.stdout, { end: false })
+  }
+
+  async rm(cmd) {
+    const file = path.resolve(this.#path, cmd[1])
+    await fs.rm(file)
+  }
+
+  async cp(cmd) {
+    const src = path.join(this.#path, cmd[1])
+    const dest = path.join(this.#path, cmd[2])
+    if (await isPathExist(dest)) throw new Error("File already exists " + dest)
+
+    const srcStream = createReadStream(src)
+    const destStream = createWriteStream(dest)
+    await pipeline(srcStream, destStream)
+  }
+
+  async mv(cmd) {
+    this.cp(cmd)
+    this.rm(cmd)
   }
 
   async os(cmd) {
@@ -59,8 +120,8 @@ export class NikolayCommander {
     let current = command
 
     while (current.length) {
-      if (current[0] === '"') {
-        const index = current.indexOf('"', 1)
+      if (current[0] === '"' || current[0] === "\\") {
+        const index = current.indexOf(current[0], 1)
         if (index === -1) return [] // not valid input
         res.push(current.slice(1, index))
         current = current.slice(index + 1).trimStart()
@@ -75,6 +136,7 @@ export class NikolayCommander {
         }
       }
     }
+
     return res
   }
 }
