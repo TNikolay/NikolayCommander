@@ -99,8 +99,10 @@ export class NikolayCommander {
 
   async cp(cmd) {
     const src = path.join(this.#path, cmd[1])
-    const dest = path.join(this.#path, cmd[2])
-    if (await isPathExist(dest)) throw new Error("File already exists " + dest)
+    if (!(await isPathExist(src))) throw new Error("Source file does not exist: " + src)
+
+    const dest = path.join(this.#path, cmd[2], path.basename(src))
+    await fs.cp(src, dest, { recursive: true, errorOnExist: true, force: false })
 
     const srcStream = createReadStream(src)
     const destStream = createWriteStream(dest)
@@ -108,8 +110,8 @@ export class NikolayCommander {
   }
 
   async mv(cmd) {
-    this.cp(cmd)
-    this.rm(cmd)
+    await this.cp(cmd)
+    await this.rm(cmd)
   }
 
   async os(cmd) {
@@ -123,6 +125,7 @@ export class NikolayCommander {
   async compress(cmd) {
     const src = path.join(this.#path, cmd[1])
     const dest = path.join(this.#path, cmd[2])
+    if (!(await isPathExist(src))) throw new Error("Source file does not exist: " + src)
     if (await isPathExist(dest)) throw new Error("File already exists " + dest)
 
     await compressBrotli(src, dest)
@@ -131,6 +134,7 @@ export class NikolayCommander {
   async decompress(cmd) {
     const src = path.join(this.#path, cmd[1])
     const dest = path.join(this.#path, cmd[2])
+    if (!(await isPathExist(src))) throw new Error("Source file does not exist: " + src)
     if (await isPathExist(dest)) throw new Error("File already exists " + dest)
 
     await decompressBrotli(src, dest)
