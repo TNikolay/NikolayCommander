@@ -74,8 +74,8 @@ export class NikolayCommander {
   }
 
   async rn(cmd) {
-    const oldName = path.join(this.#path, cmd[1])
-    const newName = path.join(this.#path, cmd[2])
+    const oldName = path.resolve(this.#path, cmd[1])
+    const newName = path.resolve(this.#path, cmd[2])
     if (await isPathExist(newName)) throw new Error("File already exists")
     await fs.rename(oldName, newName)
   }
@@ -92,10 +92,10 @@ export class NikolayCommander {
   }
 
   async cp(cmd) {
-    const src = path.join(this.#path, cmd[1])
+    const src = path.resolve(this.#path, cmd[1])
     if (!(await isPathExist(src))) throw new Error("Source file does not exist: " + src)
 
-    const dest = path.join(this.#path, cmd[2], path.basename(src))
+    const dest = path.resolve(this.#path, cmd[2], path.basename(src))
     await fs.cp(src, dest, { recursive: true, errorOnExist: true, force: false })
 
     const srcStream = createReadStream(src)
@@ -117,8 +117,8 @@ export class NikolayCommander {
   }
 
   async compress(cmd) {
-    const src = path.join(this.#path, cmd[1])
-    const dest = path.join(this.#path, cmd[2])
+    const src = path.resolve(this.#path, cmd[1])
+    const dest = path.resolve(this.#path, cmd[2])
     if (!(await isPathExist(src))) throw new Error("Source file does not exist: " + src)
     if (await isPathExist(dest)) throw new Error("File already exists " + dest)
 
@@ -126,8 +126,8 @@ export class NikolayCommander {
   }
 
   async decompress(cmd) {
-    const src = path.join(this.#path, cmd[1])
-    const dest = path.join(this.#path, cmd[2])
+    const src = path.resolve(this.#path, cmd[1])
+    const dest = path.resolve(this.#path, cmd[2])
     if (!(await isPathExist(src))) throw new Error("Source file does not exist: " + src)
     if (await isPathExist(dest)) throw new Error("File already exists " + dest)
 
