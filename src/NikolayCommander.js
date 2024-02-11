@@ -1,3 +1,4 @@
+import chalk from "chalk"
 import { createReadStream, createWriteStream } from "fs"
 import fs from "fs/promises"
 import os from "os"
@@ -35,7 +36,7 @@ export class NikolayCommander {
     const rl = createInterface({ input: process.stdin, output: process.stdout })
 
     while (true) {
-      console.log(`\nYou are currently in ${this.#path}\n\n`)
+      console.log("\nYou are currently in " + chalk.blue.bold(this.#path) + "\n\n")
 
       const answer = (await rl.question(">> ")).trim()
       if (answer === ".exit") return rl.close()
@@ -43,13 +44,13 @@ export class NikolayCommander {
       try {
         const cmd = this.#parseInput(answer)
         if (!cmd || !this.COMMAND_LIST[cmd[0]] || cmd.length !== this.COMMAND_LIST[cmd[0]]) {
-          console.log("Invalid input")
+          console.log(chalk.red("Invalid input"))
           continue
         }
 
         await this[cmd[0]](cmd)
       } catch {
-        console.log("\nOperation failed")
+        console.log(chalk.red("\nOperation failed"))
       }
     }
   }
